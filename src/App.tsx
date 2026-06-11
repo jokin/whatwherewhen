@@ -3,7 +3,6 @@ import { BrowseView } from "./views/BrowseView";
 import { MapView } from "./views/MapView";
 import { MineView } from "./views/MineView";
 import { InstallPrompt } from "./pwa/InstallPrompt";
-import { UpdateToast } from "./pwa/UpdateToast";
 import type { TabName } from "./types";
 
 const SAVE_KEY = "elsewhere-saved-2026";
@@ -33,7 +32,6 @@ export default function App() {
         {tab === "Map" && <MapView saved={saved} onSave={handleSave} onTabChange={handleTab} />}
         {tab === "Mine" && <MineView saved={saved} onSave={handleSave} onTabChange={handleTab} />}
         <InstallPrompt />
-        <UpdateToast />
       </div>
     </div>
   );

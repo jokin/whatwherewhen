@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "prompt", // user confirms updates via the in-app toast
+      registerType: "autoUpdate",
       includeAssets: ["fonts/*.woff2", "icons/*.png"],
       manifest: {
         name: "Elsewhere '26 — What Where When",
