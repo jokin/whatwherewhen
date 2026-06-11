@@ -1,0 +1,70 @@
+/* Self-hosted fonts — required for offline use, no CDN at runtime. */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Anton.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Special Elite";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/SpecialElite.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Courier Prime";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/CourierPrime.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Courier Prime";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/CourierPrime-Bold.woff2") format("woff2");
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+body { background: #1a1a1a; }
+button { cursor: pointer; }
+input { -webkit-appearance: none; }
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ── Responsive shell ───────────────────────────────
+   Phone: full-bleed, single column.
+   Tablet / desktop: app fills the width (up to a max) and the
+   event list reflows into multiple columns — not a centered phone. */
+.app-shell {
+  width: 100%; height: 100%;
+  background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+}
+.phone-frame {
+  position: relative; overflow: hidden;
+  background: #e8dfc9;
+  width: 100%; height: 100%;
+  padding-top: env(safe-area-inset-top);
+}
+@media (min-width: 560px) {
+  .phone-frame {
+    width: 100%;
+    max-width: 1040px;
+    height: 100%;
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    padding-top: 0;
+  }
+}
+
+/* Event list: 1 column on phones, auto-flows to 2–3 on wider screens. */
+.stub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr));
+  gap: 9px;
+  align-content: start;
+}
+.grid-full { grid-column: 1 / -1; }

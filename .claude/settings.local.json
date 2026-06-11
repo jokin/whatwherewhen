@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(python3 -c \"import PIL; print\\('PIL ok'\\)\")"
+    ]
+  }
+}
