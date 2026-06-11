@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { DS, DAYS } from "../ds";
+import { DS, DAYS, DAY_FULL, DAY_DATES } from "../ds";
 import { events } from "../data";
 import { Phone, StatusBar, AdmitStrip, StubCard, Nav } from "../components/ui";
 import { EventSheet } from "../sheets/EventSheet";
@@ -14,6 +14,17 @@ export function MineView({ saved, onSave, onTabChange }: {
   const savedEvents = useMemo(() =>
     events.filter((e) => saved.has(e.id))
       .sort((a, b) => DAYS.indexOf(a.days[0] as typeof DAYS[number]) - DAYS.indexOf(b.days[0] as typeof DAYS[number])), [saved]);
+
+  // Group saved events by first day
+  const byDay = useMemo(() => {
+    const groups: { day: string; evs: typeof savedEvents; startIndex: number }[] = [];
+    let idx = 0;
+    for (const day of DAYS) {
+      const evs = savedEvents.filter((e) => e.days[0] === day);
+      if (evs.length) { groups.push({ day, evs, startIndex: idx }); idx += evs.length; }
+    }
+    return groups;
+  }, [savedEvents]);
 
   return (
     <Phone>
@@ -52,8 +63,19 @@ export function MineView({ saved, onSave, onTabChange }: {
         : (
           <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "0 18px 16px 50px" }}>
             <div className="stub-grid">
-              {savedEvents.map((e, i) => (
-                <StubCard key={e.id} event={e} index={i} saved onSelect={setSheet} onSave={onSave} />
+              {byDay.map(({ day, evs, startIndex }) => (
+                <>
+                  <div key={"h-" + day} className="grid-full"
+                    style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "14px 0 6px",
+                      borderBottom: "2px solid " + DS.ink, marginBottom: 2 }}>
+                    <span style={{ fontFamily: DS.fDisp, fontSize: 21, color: DS.hi, letterSpacing: 0.3, lineHeight: 1 }}>{DAY_FULL[day].toUpperCase()}</span>
+                    <span style={{ fontFamily: DS.fMono, fontSize: 11, color: DS.muted }}>{evs.length} saved</span>
+                    <span style={{ marginLeft: "auto", fontFamily: DS.fMono, fontSize: 10.5, color: DS.brown, letterSpacing: 1 }}>✶ {DAY_DATES[day]}</span>
+                  </div>
+                  {evs.map((e, i) => (
+                    <StubCard key={e.id} event={e} index={startIndex + i} saved onSelect={setSheet} onSave={onSave} />
+                  ))}
+                </>
               ))}
             </div>
             <div style={{ height: 12 }}></div>
