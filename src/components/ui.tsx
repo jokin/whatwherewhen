@@ -80,9 +80,11 @@ export function SearchInput({ value, onChange, placeholder }: {
         <span style={{ fontWeight: 700, fontSize: 15.8 }}>⌕</span>
         <input ref={ref} value={value} onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || "find happenings, camps…"}
+          aria-label={placeholder || "find happenings, camps"}
           style={{ flex: 1, border: "none", background: "transparent", fontFamily: DS.fUi,
             fontSize: 14.7, color: DS.ink, outline: "none" }} />
-        {value && <span onClick={() => onChange("")} style={{ cursor: "pointer", color: DS.muted, fontSize: 18.1 }}>×</span>}
+        {value && <button onClick={() => onChange("")} aria-label="Clear search"
+          style={{ cursor: "pointer", color: DS.muted, fontSize: 18.1, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>}
       </div>
     </div>
   );
@@ -92,13 +94,14 @@ export function DayTabs({ active, onChange }: { active: string; onChange: (d: st
   return (
     <div style={{ display: "flex", gap: 5, padding: "4px 18px 4px 50px", flex: "0 0 auto", zIndex: 2 }}>
       {DAYS.map((d) => (
-        <span key={d} onClick={() => onChange(d)} style={{ flex: 1, textAlign: "center",
+        <button key={d} onClick={() => onChange(d)} aria-pressed={d === active}
+          style={{ flex: 1, textAlign: "center",
           fontFamily: DS.fUi, fontSize: 13.6, fontWeight: 700, padding: "5px 0 4px", borderRadius: 3,
           cursor: "pointer", userSelect: "none",
           border: d === active ? "2px solid " + DS.accent : "1.5px solid rgba(38,48,42,0.35)",
           color: d === active ? DS.paper : DS.ink,
           background: d === active ? DS.accent : "transparent",
-          transform: d === active ? "rotate(-2deg)" : "none" }}>{d.toUpperCase()}</span>
+          transform: d === active ? "rotate(-2deg)" : "none" }}>{d.toUpperCase()}</button>
       ))}
     </div>
   );
@@ -133,12 +136,14 @@ export function CatChips({ active, onChange }: { active: string; onChange: (k: s
   const onDown = (e: React.PointerEvent) => {
     const el = ref.current; if (!el) return;
     drag.current = { down: true, moved: false, startX: e.clientX, startLeft: el.scrollLeft };
-    el.setPointerCapture && el.setPointerCapture(e.pointerId);
   };
   const onMove = (e: React.PointerEvent) => {
     const d = drag.current; if (!d.down) return;
     const dx = e.clientX - d.startX;
-    if (Math.abs(dx) > 3) d.moved = true;
+    if (Math.abs(dx) > 3) {
+      if (!d.moved) { const el = ref.current; el?.setPointerCapture && el.setPointerCapture(e.pointerId); }
+      d.moved = true;
+    }
     ref.current!.scrollLeft = d.startLeft - dx;
     updateEdges();
   };
@@ -160,15 +165,16 @@ export function CatChips({ active, onChange }: { active: string; onChange: (k: s
           const on = c.key === active;
           const cc = c.c || DS.accent;
           return (
-            <span key={c.key} onClick={click(on ? "" : c.key)} style={{ whiteSpace: "nowrap",
+            <button key={c.key} onClick={click(on ? "" : c.key)} aria-pressed={on}
+              style={{ whiteSpace: "nowrap",
               flex: "0 0 auto", cursor: "pointer", userSelect: "none",
               fontFamily: DS.fUi, fontSize: 12.4, fontWeight: 700, padding: "5px 10px", borderRadius: 2,
               background: on ? cc : DS.card,
               color: on ? DS.paper : DS.ink,
               border: on ? "none" : "1px solid " + cc + "66",
               boxShadow: on ? "none" : "1px 1px 0 rgba(38,48,42,0.1)" }}>
-              <span style={{ color: on ? DS.paper : cc, marginRight: 4 }}>{c.glyph}</span>{c.label}
-            </span>
+              <span aria-hidden="true" style={{ color: on ? DS.paper : cc, marginRight: 4 }}>{c.glyph}</span>{c.label}
+            </button>
           );
         })}
       </div>
@@ -176,10 +182,12 @@ export function CatChips({ active, onChange }: { active: string; onChange: (k: s
       {edges.right && (
         <>
           <div style={fade("right")}></div>
-          <span onClick={scrollBy(1)} style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-60%)",
+          <button onClick={scrollBy(1)} aria-label="Scroll categories right"
+            style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-60%)",
             zIndex: 5, cursor: "pointer", width: 22, height: 22, borderRadius: "50%", background: DS.card,
             border: "1px solid " + DS.ink + "55", display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: DS.fUi, fontSize: 14, fontWeight: 700, color: DS.ink, boxShadow: "0 1px 2px rgba(38,48,42,0.2)" }}>›</span>
+            fontFamily: DS.fUi, fontSize: 14, fontWeight: 700, color: DS.ink, boxShadow: "0 1px 2px rgba(38,48,42,0.2)",
+            padding: 0 }}>›</button>
         </>
       )}
     </div>
@@ -192,15 +200,16 @@ export function NowStrip({ events, onSelect }: { events: Event[]; onSelect: (e: 
   return (
     <div style={{ margin: "6px 18px 2px 50px", flex: "0 0 auto", zIndex: 2 }}>
       {now.map((e, i) => (
-        <div key={e.id} onClick={() => onSelect(e)} style={{ cursor: "pointer",
+        <button key={e.id} onClick={() => onSelect(e)} aria-label={"Now: " + e.title}
+          style={{ cursor: "pointer", width: "100%",
           background: i === 0 ? DS.accent : DS.hi, color: DS.paper,
           padding: "8px 12px", marginBottom: i === 0 && now.length > 1 ? 4 : 0,
-          display: "flex", alignItems: "center", gap: 10 }}>
+          display: "flex", alignItems: "center", gap: 10, border: "none", textAlign: "left", fontFamily: "inherit" }}>
           <span style={{ fontFamily: DS.fDisp, fontSize: 12.4, letterSpacing: 1, whiteSpace: "nowrap" }}>● NOW</span>
           <span style={{ fontFamily: DS.fDisp, fontSize: 17, lineHeight: 1, flex: 1, minWidth: 0,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title.toUpperCase()}</span>
           <span style={{ fontFamily: DS.fUi, fontSize: 11.3, whiteSpace: "nowrap", opacity: 0.85 }}>{e.camp}</span>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -213,7 +222,10 @@ export function StubCard({ event, saved, onSelect, onSave, index }: {
   const acc = cat.c || (index % 2 === 0 ? DS.accent : DS.hi);
   const t = event.time === "00:00" ? "✶" : event.time;
   return (
-    <div onClick={() => onSelect(event)} style={{ display: "flex", background: DS.card,
+    <div onClick={() => onSelect(event)}
+      role="button" tabIndex={0} aria-label={event.title}
+      onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect(event); } }}
+      style={{ display: "flex", background: DS.card,
       border: "1px solid rgba(38,48,42,0.25)", boxShadow: "1px 2px 0 rgba(38,48,42,0.14)",
       borderLeft: "5px solid " + acc, cursor: "pointer", position: "relative",
       transform: "rotate(" + (index % 2 ? 0.4 : -0.4) + "deg)" }}>
@@ -234,11 +246,13 @@ export function StubCard({ event, saved, onSelect, onSave, index }: {
       <span style={{ position: "absolute", right: 7, top: 5, transform: "rotate(" + (index % 2 ? -4 : 4) + "deg)",
         background: acc, color: DS.paper, fontFamily: DS.fUi, fontSize: 9, fontWeight: 700,
         letterSpacing: 1, padding: "2px 5px", borderRadius: 2 }}>{cat.label.toUpperCase()}</span>
-      <span onClick={(ev) => { ev.stopPropagation(); onSave(event.id); }}
+      <button onClick={(ev) => { ev.stopPropagation(); onSave(event.id); }}
+        aria-label={saved ? "Remove from saved" : "Save event"}
+        aria-pressed={saved}
         style={{ position: "absolute", right: 6, bottom: 5, fontSize: 15.8, cursor: "pointer",
-          color: saved ? DS.accent : DS.muted }}>
+          color: saved ? DS.accent : DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>
         {saved ? "♥" : "♡"}
-      </span>
+      </button>
     </div>
   );
 }
@@ -246,15 +260,17 @@ export function StubCard({ event, saved, onSelect, onSave, index }: {
 export function Nav({ active, onChange }: { active: string; onChange: (tab: "Browse" | "Map" | "Mine") => void }) {
   const tabs: Array<[string, "Browse" | "Map" | "Mine"]> = [["✶", "Browse"], ["◈", "Map"], ["♥", "Mine"]];
   return (
-    <div style={{ display: "flex", borderTop: "2px dotted rgba(38,48,42,0.45)", flex: "0 0 auto",
+    <nav aria-label="Main navigation" style={{ display: "flex", borderTop: "2px dotted rgba(38,48,42,0.45)", flex: "0 0 auto",
       background: DS.card, zIndex: 10, position: "relative", paddingBottom: "env(safe-area-inset-bottom)" }}>
       {tabs.map(([g, l]) => (
-        <div key={l} onClick={() => onChange(l)} style={{ flex: 1, textAlign: "center", padding: "8px 0 12px",
-          cursor: "pointer", background: l === active ? DS.hi : "transparent", color: l === active ? DS.paper : DS.muted }}>
-          <div style={{ fontSize: 18.1 }}>{g}</div>
-          <div style={{ fontFamily: DS.fUi, fontSize: 11.3, fontWeight: l === active ? 700 : 400 }}>{l}</div>
-        </div>
+        <button key={l} onClick={() => onChange(l)} aria-current={l === active ? "page" : undefined}
+          style={{ flex: 1, textAlign: "center", padding: "8px 0 12px",
+          cursor: "pointer", background: l === active ? DS.hi : "transparent", color: l === active ? DS.paper : DS.muted,
+          border: "none", fontFamily: DS.fUi }}>
+          <div aria-hidden="true" style={{ fontSize: 18.1 }}>{g}</div>
+          <div style={{ fontSize: 11.3, fontWeight: l === active ? 700 : 400 }}>{l}</div>
+        </button>
       ))}
-    </div>
+    </nav>
   );
 }
