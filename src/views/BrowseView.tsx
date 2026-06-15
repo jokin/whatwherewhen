@@ -171,8 +171,10 @@ export function BrowseView({ saved, onSave, onTabChange }: {
         <div ref={barRef} style={{ flex: "0 0 auto", zIndex: 6, background: DS.card,
           borderBottom: "2px dotted rgba(38,48,42,0.4)",
           boxShadow: filtersOpen ? "none" : "0 3px 8px rgba(38,48,42,0.12)" }}>
-          <div onClick={() => setFiltersOpen((o) => !o)} style={{ cursor: "pointer",
-            height: 46, display: "flex", alignItems: "center", gap: 11, padding: "0 16px 0 50px" }}>
+          <button onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen} aria-controls="filter-overlay"
+            style={{ cursor: "pointer", width: "100%",
+            height: 46, display: "flex", alignItems: "center", gap: 11, padding: "0 16px 0 50px",
+            background: "none", border: "none", textAlign: "left", fontFamily: "inherit" }}>
             <Ransom word="WWW" size={15} jitter={1} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15, minWidth: 0 }}>
               <span style={{ fontFamily: DS.fUi, fontSize: 12.5, fontWeight: 700, color: DS.ink, whiteSpace: "nowrap" }}>
@@ -189,16 +191,17 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               <span style={{ display: "inline-block", transition: "transform .2s",
                 transform: filtersOpen ? "rotate(180deg)" : "none" }}>⌄</span>
             </span>
-          </div>
+          </button>
           {/* mini day rail — quick jump while collapsed */}
           <div style={{ display: "flex", gap: 5, padding: "0 16px 8px 50px" }}>
             {DAYS.map((d) => (
-              <span key={d} onClick={() => handleDayJump(d)} style={{ flex: 1, textAlign: "center", cursor: "pointer",
+              <button key={d} onClick={() => handleDayJump(d)} aria-pressed={d === activeDay}
+                style={{ flex: 1, textAlign: "center", cursor: "pointer",
                 fontFamily: DS.fUi, fontSize: 11, fontWeight: 700, padding: "3px 0", borderRadius: 3,
                 opacity: dayCounts[d] ? 1 : 0.35,
                 border: d === activeDay ? "1.5px solid " + DS.accent : "1px solid rgba(38,48,42,0.25)",
                 background: d === activeDay ? DS.accent : "transparent",
-                color: d === activeDay ? DS.paper : DS.ink }}>{d.toUpperCase()}</span>
+                color: d === activeDay ? DS.paper : DS.ink }}>{d.toUpperCase()}</button>
             ))}
           </div>
         </div>
@@ -255,17 +258,18 @@ export function BrowseView({ saved, onSave, onTabChange }: {
       {/* filter overlay — search + categories only; days stay in the nav bar */}
       {collapsed && filtersOpen && (
         <>
-          <div onClick={closePeek} style={{ position: "absolute", inset: 0, top: barBottom, zIndex: 5,
+          <div onClick={closePeek} aria-hidden="true" style={{ position: "absolute", inset: 0, top: barBottom, zIndex: 5,
             background: "rgba(38,48,42,0.4)" }}></div>
-          <div style={{ position: "absolute", left: 0, right: 0, top: barBottom, zIndex: 7, background: DS.paper,
+          <div id="filter-overlay" role="dialog" aria-modal="true" aria-label="Filter the program"
+            style={{ position: "absolute", left: 0, right: 0, top: barBottom, zIndex: 7, background: DS.paper,
             borderBottom: "2px solid " + DS.ink, boxShadow: "0 12px 26px rgba(38,48,42,0.3)", paddingBottom: 10 }}>
             <div style={{ fontFamily: DS.fMono, fontSize: 10, letterSpacing: 1.5, color: DS.brown,
               padding: "10px 18px 0 50px" }}>FILTER THE PROGRAM</div>
             <SearchInput value={query} onChange={handleQueryChange} />
             <CatChips active={cat} onChange={handleCatChange} />
-            <div onClick={closePeek} style={{ margin: "6px 18px 0 50px", textAlign: "center", cursor: "pointer",
+            <button onClick={closePeek} style={{ margin: "6px 18px 0 50px", display: "block", width: "calc(100% - 68px)", textAlign: "center", cursor: "pointer",
               fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, color: DS.paper, background: DS.hi,
-              padding: "7px", borderRadius: 3 }}>Done ✶</div>
+              padding: "7px", borderRadius: 3, border: "none" }}>Done ✶</button>
           </div>
         </>
       )}

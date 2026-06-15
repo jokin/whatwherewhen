@@ -53,7 +53,7 @@ export function MapView({ saved, onSave, onTabChange }: {
       <SearchInput value={query} onChange={setQuery} placeholder="search a barrio…" />
       {/* map */}
       <div onClick={() => setSelCamp(null)} style={{ flex: "1 1 auto", position: "relative", overflow: "hidden", background: DS.paper }}>
-        <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d={od1} fill="none" stroke={DS.brown} strokeOpacity="0.55" strokeWidth="2.5"
             strokeDasharray="7 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
           <path d={od2} fill="rgba(220,207,174,0.4)" stroke={DS.ink} strokeOpacity="0.4" strokeWidth="1.5"
@@ -79,9 +79,11 @@ export function MapView({ saved, onSave, onTabChange }: {
           const big = c.count >= 16;
           const sel = selCamp?.name === c.name;
           return (
-            <div key={c.name} onClick={(ev) => { ev.stopPropagation(); setSelCamp(sel ? null : c); }}
+            <button key={c.name} onClick={(ev) => { ev.stopPropagation(); setSelCamp(sel ? null : c); }}
+              aria-pressed={sel} aria-label={c.name}
               style={{ position: "absolute", left: c.x + "%", top: Y(c.y) + "%",
-                transform: "translate(-50%,-50%) rotate(" + ((i % 3 - 1) * 3) + "deg)", zIndex: big ? 5 : 3, cursor: "pointer" }}>
+                transform: "translate(-50%,-50%) rotate(" + ((i % 3 - 1) * 3) + "deg)", zIndex: big ? 5 : 3, cursor: "pointer",
+                background: "none", border: "none", padding: 0 }}>
               {big ? (
                 <span style={{ display: "inline-block", background: sel ? DS.accent : DS.card,
                   color: sel ? DS.paper : DS.ink,
@@ -94,7 +96,7 @@ export function MapView({ saved, onSave, onTabChange }: {
                   background: sel ? DS.accent : DS.brown,
                   border: "1.5px solid " + DS.paper, boxShadow: "0 0 0 1px " + DS.brown }}></span>
               )}
-            </div>
+            </button>
           );
         })}
         {/* Camp bottom panel */}
@@ -108,7 +110,8 @@ export function MapView({ saved, onSave, onTabChange }: {
                 <div style={{ fontFamily: DS.fDisp, fontSize: 22.6, color: DS.hi }}>{selCamp.name.toUpperCase()}</div>
                 <div style={{ fontFamily: DS.fUi, fontSize: 12.4, color: DS.muted }}>{selCamp.count} events this edition</div>
               </div>
-              <span onClick={() => setSelCamp(null)} style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted }}>×</span>
+              <button onClick={() => setSelCamp(null)} aria-label="Close"
+                style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>
             </div>
             <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "6px 14px 12px", display: "flex", flexDirection: "column", gap: 7 }}>
               {campEvents.map((e, i) => {
@@ -123,7 +126,8 @@ export function MapView({ saved, onSave, onTabChange }: {
                         <span style={{ fontFamily: DS.fMono, fontSize: 10, color: DS.brown, letterSpacing: 0.5, whiteSpace: "nowrap" }}>✶ {DAY_DATES[day]}</span>
                       </div>
                     )}
-                    <div onClick={() => setSheet(e)} style={{ display: "flex", gap: 8, cursor: "pointer",
+                    <button onClick={() => setSheet(e)} aria-label={e.title}
+                      style={{ display: "flex", gap: 8, cursor: "pointer", width: "100%", textAlign: "left",
                       padding: "7px 8px", background: DS.paper, border: "1px solid rgba(38,48,42,0.15)" }}>
                       <span style={{ fontFamily: DS.fDisp, fontSize: 15.8, color: catColor(e.cat), flex: "0 0 auto", minWidth: 38 }}>
                         {fmtTime(e.time)}
@@ -133,7 +137,7 @@ export function MapView({ saved, onSave, onTabChange }: {
                           display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{e.title}</div>
                         <div style={{ fontFamily: DS.fMono, fontSize: 11.3, color: DS.muted }}>{e.days.join(" / ")} · {catOf(e.cat).label}</div>
                       </div>
-                    </div>
+                    </button>
                   </Fragment>
                 );
               })}

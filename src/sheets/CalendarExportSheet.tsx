@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DS, DAYS, DAY_FULL, DAY_DATES, catColor } from "../ds";
 import { downloadICS, buildGCalUrl } from "../ics";
 import type { Event } from "../types";
@@ -6,7 +6,8 @@ import type { Event } from "../types";
 export function CalendarExportSheet({ events, onClose }: { events: Event[]; onClose: () => void }) {
   const [vis, setVis] = useState(false);
   const [done, setDone] = useState(false);
-  useEffect(() => { requestAnimationFrame(() => setVis(true)); }, []);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { requestAnimationFrame(() => { setVis(true); closeRef.current?.focus(); }); }, []);
   const close = () => { setVis(false); setTimeout(onClose, 280); };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
@@ -24,9 +25,10 @@ export function CalendarExportSheet({ events, onClose }: { events: Event[]; onCl
 
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 50 }}>
-      <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(38,48,42,0.45)",
+      <div onClick={close} aria-hidden="true" style={{ position: "absolute", inset: 0, background: "rgba(38,48,42,0.45)",
         opacity: vis ? 1 : 0, transition: "opacity 0.28s" }}></div>
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "86%",
+      <div role="dialog" aria-modal="true" aria-label="Add to calendar"
+        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "86%",
         background: DS.card, borderTop: "2px solid " + DS.ink,
         transform: vis ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.28s cubic-bezier(.2,.8,.3,1)",
@@ -35,8 +37,9 @@ export function CalendarExportSheet({ events, onClose }: { events: Event[]; onCl
         {/* handle + close */}
         <div style={{ flex: "0 0 auto", padding: "10px 18px 0",
           display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ width: 40, height: 4, background: "rgba(38,48,42,0.3)", borderRadius: 2 }}></div>
-          <span onClick={close} style={{ fontSize: 24, cursor: "pointer", color: DS.muted, lineHeight: 1 }}>×</span>
+          <div aria-hidden="true" style={{ width: 40, height: 4, background: "rgba(38,48,42,0.3)", borderRadius: 2 }}></div>
+          <button ref={closeRef} onClick={close} aria-label="Close"
+            style={{ fontSize: 24, cursor: "pointer", color: DS.muted, lineHeight: 1, background: "none", border: "none", padding: 0 }}>×</button>
         </div>
 
         {/* heading */}

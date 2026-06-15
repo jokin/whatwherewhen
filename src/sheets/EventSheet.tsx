@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DS, catOf } from "../ds";
 import type { Event } from "../types";
 
@@ -6,7 +6,8 @@ export function EventSheet({ event, saved, onClose, onSave }: {
   event: Event; saved: boolean; onClose: () => void; onSave: (id: string) => void;
 }) {
   const [vis, setVis] = useState(false);
-  useEffect(() => { requestAnimationFrame(() => setVis(true)); }, []);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { requestAnimationFrame(() => { setVis(true); closeRef.current?.focus(); }); }, []);
   const close = () => { setVis(false); setTimeout(onClose, 280); };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
@@ -18,16 +19,18 @@ export function EventSheet({ event, saved, onClose, onSave }: {
   const cc = cat.c || DS.accent;
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 50 }}>
-      <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(38,48,42,0.45)",
+      <div onClick={close} aria-hidden="true" style={{ position: "absolute", inset: 0, background: "rgba(38,48,42,0.45)",
         opacity: vis ? 1 : 0, transition: "opacity 0.28s" }}></div>
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "78%",
+      <div role="dialog" aria-modal="true" aria-label={event.title}
+        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "78%",
         background: DS.card, borderTop: "2px solid " + DS.ink,
         transform: vis ? "translateY(0)" : "translateY(100%)", transition: "transform 0.28s cubic-bezier(.2,.8,.3,1)",
         display: "flex", flexDirection: "column" }}>
         {/* drag handle */}
         <div style={{ flex: "0 0 auto", padding: "10px 18px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ width: 40, height: 4, background: "rgba(38,48,42,0.3)", borderRadius: 2, margin: "0 auto 0 0" }}></div>
-          <span onClick={close} style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted, lineHeight: 1 }}>×</span>
+          <div aria-hidden="true" style={{ width: 40, height: 4, background: "rgba(38,48,42,0.3)", borderRadius: 2, margin: "0 auto 0 0" }}></div>
+          <button ref={closeRef} onClick={close} aria-label="Close"
+            style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted, lineHeight: 1, background: "none", border: "none", padding: 0 }}>×</button>
         </div>
         <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "0 18px 24px" }}>
           <div style={{ marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
