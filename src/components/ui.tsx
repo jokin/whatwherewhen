@@ -1,6 +1,7 @@
 // Shared design-system components, ported from the B1 prototype.
 import React, { useState, useEffect, useRef, ReactNode, CSSProperties } from "react";
 import { DS, NOISE, DAYS, DAY_FULL, CATS, catOf } from "../ds";
+import { minsToHHMM } from "../helpers";
 import type { Event } from "../types";
 
 // Collage "ransom-note" word — mixed-font cut-out chips, jittered & shadowed.
@@ -253,6 +254,32 @@ export function StubCard({ event, saved, onSelect, onSave, index }: {
           color: saved ? DS.accent : DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>
         {saved ? "♥" : "♡"}
       </button>
+    </div>
+  );
+}
+
+export function TimeSlider({ mins, onChange, onReset, isRealNow }: {
+  mins: number; onChange: (m: number) => void; onReset: () => void; isRealNow: boolean;
+}) {
+  return (
+    <div style={{ flex: "0 0 auto", padding: "5px 18px 7px 50px",
+      background: DS.card, borderBottom: "1.5px dotted rgba(38,48,42,0.4)",
+      display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontFamily: DS.fDisp, fontSize: 16, lineHeight: 1, minWidth: 60,
+        color: isRealNow ? DS.accent : DS.hi, whiteSpace: "nowrap" }}>
+        {isRealNow ? "● NOW" : "⏲ " + minsToHHMM(mins)}
+      </span>
+      <input type="range" min={0} max={1439} value={mins}
+        aria-label="Time travel slider"
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ flex: 1, accentColor: DS.accent, cursor: "pointer", height: 4 }} />
+      {!isRealNow && (
+        <button onClick={onReset} aria-label="Back to now"
+          style={{ flex: "0 0 auto", cursor: "pointer", whiteSpace: "nowrap",
+            fontFamily: DS.fUi, fontSize: 11, fontWeight: 700, color: DS.paper,
+            background: DS.accent, border: "none", padding: "4px 8px", borderRadius: 2,
+            letterSpacing: 0.5 }}>↩ NOW</button>
+      )}
     </div>
   );
 }

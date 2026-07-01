@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { DS, DAYS, DAY_FULL, DAY_DATES, CATS } from "../ds";
 import { events } from "../data";
-import { Phone, StatusBar, AdmitStrip, SearchInput, DayTabs, CatChips, NowStrip, StubCard, Nav, Ransom } from "../components/ui";
+import { Phone, StatusBar, AdmitStrip, SearchInput, DayTabs, CatChips, NowStrip, StubCard, Nav, Ransom, TimeSlider } from "../components/ui";
 import { EventSheet } from "../sheets/EventSheet";
+import { timeToMins, getRealNowMins, getFestivalDay } from "../helpers";
 import type { Event, TabName } from "../types";
 
 const BATCH = 50;
@@ -19,10 +20,19 @@ export function BrowseView({ saved, onSave, onTabChange }: {
   const [sheet, setSheet] = useState<Event | null>(null);
   const [limit, setLimit] = useState(BATCH);
   const [activeDay, setActiveDay] = useState<string>(() => {
+    const fd = getFestivalDay();
+    if (fd) return fd;
     for (const d of DAYS) if (events.some((e) => e.days.includes(d))) return d;
     return DAYS[0];
   });
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Time-travel: sliderMins drives "now" highlighting and list position.
+  // realNowMins is fixed at mount; isRealNow means slider is at real current time.
+  const realNowMins = useRef(getRealNowMins());
+  const [sliderMins, setSliderMins] = useState(getRealNowMins);
+  const isRealNow = Math.abs(sliderMins - realNowMins.current) < 2;
+  const sliderDragging = useRef(false);
 
   const handleCatChange = useCallback((c: string) => setCat(c), []);
   const handleQueryChange = useCallback((q: string) => setQuery(q), []);
@@ -64,8 +74,15 @@ export function BrowseView({ saved, onSave, onTabChange }: {
   const limitRef = useRef(limit); limitRef.current = limit;
   const activeDayRef = useRef(activeDay); activeDayRef.current = activeDay;
 
+  // Events happening "now" at the current slider time on the active day.
   const nowEvents = useMemo(() =>
-    filtered.filter((e) => e.recur && e.days.includes(activeDay)), [filtered, activeDay]);
+    filtered.filter((e) => {
+      if (!e.days.includes(activeDay)) return false;
+      if (e.time === "00:00") return false;
+      const start = timeToMins(e.time);
+      const end = start + (e.dur > 0 ? e.dur : 60);
+      return sliderMins >= start && sliderMins < end;
+    }), [filtered, activeDay, sliderMins]);
 
   // collapsing header + tap-to-reveal filters
   const [collapsed, setCollapsed] = useState(false);
@@ -98,6 +115,21 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     setCollapsed(el.scrollTop > 56);              // collapse header once we're past the top
   }, []);
 
+  const scrollToTimeMins = useCallback((targetMins: number) => {
+    const el = listRef.current; if (!el) return;
+    const evEls = el.querySelectorAll<HTMLElement>("[data-event-time]");
+    let target: HTMLElement | null = null;
+    for (const ev of evEls) {
+      const t = ev.getAttribute("data-event-time")!;
+      if (t === "00:00") continue;
+      if (timeToMins(t) >= targetMins) { target = ev; break; }
+    }
+    if (target) {
+      el.scrollTop = Math.max(0, target.offsetTop - 100);
+      setCollapsed(el.scrollTop > 56);
+    }
+  }, []);
+
   // jump the list to a day section (day tabs act as anchors, not filters)
   const handleDayJump = useCallback((day: string) => {
     setFiltersOpen(false);
@@ -113,6 +145,33 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     if (pendingDay) { scrollToDay(pendingDay); setPendingDay(null); }
   }, [limit, pendingDay, scrollToDay]);
 
+  // On mount: scroll to current real time within the active day.
+  // Uses a one-shot ref so it only fires once after first render.
+  const didInitScroll = useRef(false);
+  useEffect(() => {
+    if (didInitScroll.current) return;
+    didInitScroll.current = true;
+    // Defer to let the list paint first
+    const id = requestAnimationFrame(() => scrollToTimeMins(realNowMins.current));
+    return () => cancelAnimationFrame(id);
+  }, [scrollToTimeMins]);
+
+  // When the slider is moved, scroll the list to that time.
+  const handleSliderChange = useCallback((m: number) => {
+    sliderDragging.current = true;
+    setSliderMins(m);
+    scrollToTimeMins(m);
+    // allow scroll-spy to resume after the programmatic scroll settles
+    setTimeout(() => { sliderDragging.current = false; }, 300);
+  }, [scrollToTimeMins]);
+
+  const handleSliderReset = useCallback(() => {
+    const m = getRealNowMins();
+    realNowMins.current = m;
+    setSliderMins(m);
+    scrollToTimeMins(m);
+  }, [scrollToTimeMins]);
+
   const onScroll = useCallback(() => {
     const el = listRef.current; if (!el) return;
     const st = el.scrollTop;
@@ -126,6 +185,18 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     let cur: string | null = null;
     for (const h of heads) { if (h.offsetTop - st <= 84) cur = h.getAttribute("data-day-header"); else break; }
     if (cur) setActiveDay((prev) => cur !== prev ? cur! : prev);
+    // sync slider to topmost event's time (unless slider is being dragged)
+    if (!sliderDragging.current) {
+      const evEls = el.querySelectorAll<HTMLElement>("[data-event-time]");
+      let topMins: number | null = null;
+      for (const ev of evEls) {
+        const t = ev.getAttribute("data-event-time");
+        if (!t || t === "00:00") continue;
+        if (ev.offsetTop - st <= 130) topMins = timeToMins(t);
+        else break;
+      }
+      if (topMins !== null) setSliderMins(topMins);
+    }
   }, []);
 
   const closePeek = useCallback(() => {
@@ -225,6 +296,7 @@ export function BrowseView({ saved, onSave, onTabChange }: {
           {!query && <NowStrip events={nowEvents} onSelect={setSheet} />}
         </>
       )}
+      <TimeSlider mins={sliderMins} onChange={handleSliderChange} onReset={handleSliderReset} isRealNow={isRealNow} />
       {/* continuous, day-grouped list — infinite scroll */}
       <div ref={listRef} onScroll={onScroll} style={{ flex: "1 1 auto", overflowY: "auto", padding: "4px 18px 0 50px",
         position: "relative" }}>
@@ -243,8 +315,10 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               <span style={{ marginLeft: "auto", fontFamily: DS.fMono, fontSize: 10.5, color: DS.brown, letterSpacing: 1 }}>✶ {DAY_DATES[it.day]}</span>
             </div>
           ) : (
-            <StubCard key={it.e.id + "-" + it.day + "-" + it.i} event={it.e} index={it.i}
-              saved={saved.has(it.e.id)} onSelect={setSheet} onSave={onSave} />
+            <div key={it.e.id + "-" + it.day + "-" + it.i} data-event-time={it.e.time} className="grid-full">
+              <StubCard event={it.e} index={it.i}
+                saved={saved.has(it.e.id)} onSelect={setSheet} onSave={onSave} />
+            </div>
           ))}
           {limit < items.length && (
             <div className="grid-full" style={{ padding: "14px 0 20px", textAlign: "center",
