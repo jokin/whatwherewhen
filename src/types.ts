@@ -9,6 +9,7 @@ export interface Event {
   cat: string;
   days: string[];
   recur: boolean;
+  host: string;       // optional host of the event, may be empty
 }
 
 export interface Camp {
