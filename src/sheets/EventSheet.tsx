@@ -59,6 +59,12 @@ export function EventSheet({ event, saved, onClose, onSave }: {
                 ))}
               </div>
             </div>
+            {event.host && (
+            <div>
+              <div style={{ fontFamily: DS.fMono, fontSize: 10.2, letterSpacing: 1, color: DS.muted }}>HOST</div>
+              <div style={{ fontFamily: DS.fUi, fontSize: 15.8, color: DS.ink, marginTop: 3 }}>{event.host}</div>
+            </div>
+            )}
           </div>
           <div style={{ background: DS.paper, border: "1px solid rgba(38,48,42,0.2)", padding: "10px 12px", marginBottom: 14 }}>
             <div style={{ fontFamily: DS.fMono, fontSize: 10.2, letterSpacing: 1, color: DS.muted, marginBottom: 4 }}>CAMP / VENUE</div>

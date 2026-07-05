@@ -133,6 +133,7 @@ interface Event {
   cat:   string;       // category key (see CATS)
   days:  string[];     // array of day keys, e.g. ["Tue","Wed"] for recurring
   recur: boolean;      // true if it runs every day in days[]
+  host:  string;       // optional host of the event, may be empty
 }
 ```
 
