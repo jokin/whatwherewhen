@@ -44,7 +44,16 @@ export function MapView({ saved, onSave, onTabChange }: {
   const [query, setQuery] = useState("");
   const [selCamp, setSelCamp] = useState<Camp | null>(null);
   const [selArt, setSelArt] = useState<string | null>(null); // art installation label
+  const [selMoE, setSelMoE] = useState(false);
   const [sheet, setSheet] = useState<Event | null>(null);
+
+  const moeEvents = useMemo(() =>
+    events.filter((e) => (e.loc ?? "").toLowerCase().includes("moe"))
+      .sort((a, b) => {
+        const da = DAYS.indexOf(a.days[0] as typeof DAYS[number]) * 100 + parseInt(a.time || "99", 10);
+        const db = DAYS.indexOf(b.days[0] as typeof DAYS[number]) * 100 + parseInt(b.time || "99", 10);
+        return da - db;
+      }), []);
 
   // zoom/pan state
   const [tfm, setTfm] = useState({ s: 1, tx: 0, ty: 0 });
@@ -158,7 +167,7 @@ export function MapView({ saved, onSave, onTabChange }: {
       {/* map */}
       <div
         ref={wrapRef}
-        onClick={() => { setSelCamp(null); setSelArt(null); }}
+        onClick={() => { setSelCamp(null); setSelArt(null); setSelMoE(false); }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -217,12 +226,21 @@ export function MapView({ saved, onSave, onTabChange }: {
             })}
 
             {/* NORG structures on top of barrio fills */}
-            {NORGS.map(([path, name]) => (
-              <g key={name} filter="url(#rough)">
-                <path d={path} fill="rgba(90,65,40,0.12)" stroke="rgba(90,65,40,0.5)"
-                  strokeWidth="0.7" strokeDasharray="1.8 1.2" strokeLinejoin="round"/>
-              </g>
-            ))}
+            {NORGS.map(([path, name]) => {
+              const isMoE = name === "MoE";
+              return (
+                <g key={name} filter="url(#rough)"
+                  style={isMoE ? { cursor: "pointer" } : undefined}
+                  onClick={isMoE ? (e) => { e.stopPropagation(); setSelCamp(null); setSelArt(null); setSelMoE((v) => !v); } : undefined}>
+                  <path d={path}
+                    fill={isMoE && selMoE ? "rgba(46,68,57,0.35)" : isMoE ? "rgba(46,68,57,0.18)" : "rgba(90,65,40,0.12)"}
+                    stroke={isMoE ? "rgba(46,68,57,0.7)" : "rgba(90,65,40,0.5)"}
+                    strokeWidth={isMoE ? "1.1" : "0.7"}
+                    strokeDasharray={isMoE ? "none" : "1.8 1.2"}
+                    strokeLinejoin="round"/>
+                </g>
+              );
+            })}
 
             {/* Art — no events: tiny dots */}
             {ART.filter(([,,,ev]) => ev === 0).map(([x, y, label]) => (
@@ -291,6 +309,64 @@ export function MapView({ saved, onSave, onTabChange }: {
           <text x="228" y="168" fontSize="5.5" fill={DS.hi} fontFamily="'Special Elite', monospace"
             fontWeight="bold" textAnchor="middle" opacity="0.7" style={{ pointerEvents: "none" }}>GATE ⟶</text>
         </svg>
+
+        {/* MoE panel */}
+        {selMoE && (
+          <div onClick={(e) => e.stopPropagation()} style={{
+            position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "52%",
+            background: DS.card, borderTop: "2px solid " + DS.hi,
+            display: "flex", flexDirection: "column", zIndex: 10,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "10px 14px 6px", flex: "0 0 auto" }}>
+              <div>
+                <div style={{ fontFamily: DS.fMono, fontSize: 9.5, letterSpacing: 1.5, color: DS.brown }}>MAIN STAGE</div>
+                <div style={{ fontFamily: DS.fDisp, fontSize: 22, color: DS.hi }}>MIDDLE OF ELSEWHERE</div>
+                <div style={{ fontFamily: DS.fUi, fontSize: 12, color: DS.muted }}>{moeEvents.length} events this edition</div>
+              </div>
+              <button onClick={() => setSelMoE(false)} aria-label="Close"
+                style={{ fontSize: 24, cursor: "pointer", color: DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "6px 14px 12px",
+              display: "flex", flexDirection: "column", gap: 7 }}>
+              {moeEvents.map((e, i) => {
+                const day = e.days[0];
+                const newDay = i === 0 || moeEvents[i - 1].days[0] !== day;
+                return (
+                  <Fragment key={e.id + "-" + day}>
+                    {newDay && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: i === 0 ? "2px 0 1px" : "8px 0 1px" }}>
+                        <span style={{ fontFamily: DS.fDisp, fontSize: 13.6, color: DS.hi, letterSpacing: 0.4, whiteSpace: "nowrap" }}>
+                          {DAY_FULL[day].toUpperCase()}
+                        </span>
+                        <span style={{ flex: "1 1 auto", height: 0, borderTop: "2px dotted rgba(38,48,42,0.4)" }}/>
+                        <span style={{ fontFamily: DS.fMono, fontSize: 10, color: DS.brown, letterSpacing: 0.5, whiteSpace: "nowrap" }}>
+                          ✶ {DAY_DATES[day]}
+                        </span>
+                      </div>
+                    )}
+                    <button onClick={() => setSheet(e)} aria-label={e.title}
+                      style={{ display: "flex", gap: 8, cursor: "pointer", width: "100%", textAlign: "left",
+                        padding: "7px 8px", background: DS.paper, border: "1px solid rgba(38,48,42,0.15)" }}>
+                      <span style={{ fontFamily: DS.fDisp, fontSize: 15.8, color: catColor(e.cat), flex: "0 0 auto", minWidth: 38 }}>
+                        {fmtTime(e.time)}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontFamily: DS.fUi, fontSize: 13.6, fontWeight: 700, color: DS.ink,
+                          display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {e.title}
+                        </div>
+                        <div style={{ fontFamily: DS.fMono, fontSize: 11.3, color: DS.muted }}>
+                          {e.days.join(" / ")} · {catOf(e.cat).label}
+                        </div>
+                      </div>
+                    </button>
+                  </Fragment>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Camp bottom panel */}
         {selCamp && (

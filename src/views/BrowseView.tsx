@@ -8,15 +8,58 @@ import type { Event, TabName } from "../types";
 
 const BATCH = 50;
 
+const FEATURED_IDS = new Set([
+  "3fe82765-7615-457f-aa43-bb97ed0b1eb6", // Elsew...at? No way! WTF is going on?!
+  "549ba833-5771-43df-b7b6-218cba53f893", // New Land for Elsewhere
+  "76aacca8-24e6-4e10-81ab-1346df752023", // Shit Ninja Training
+  "7179ff96-1cee-49b2-b464-25f6aa0560a9", // Volunteers meetup and party
+  "f1ada340-926e-4d07-a6ec-881a4d384cc5", // How to make your barrio more inclusive?
+]);
+
+const MOE_LOC = "moe - middle of elsewhere";
+const moeEvents = events.filter((e) => (e.loc ?? "").toLowerCase().includes("moe"));
+
 type ListItem =
   | { type: "header"; day: string; count: number }
   | { type: "event"; e: Event; day: string; i: number };
+
+function FeaturedStrip({ onSelect }: { onSelect: (e: Event) => void }) {
+  const featuredEvents = events.filter((e) => FEATURED_IDS.has(e.id));
+  if (!featuredEvents.length) return null;
+  return (
+    <div style={{ flex: "0 0 auto", padding: "4px 0 6px" }}>
+      <div style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.brown,
+        padding: "0 18px 4px 50px" }}>✶ DON'T MISS</div>
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 18px 2px 50px",
+        scrollbarWidth: "none" }}>
+        {featuredEvents.map((e) => (
+          <button key={e.id} onClick={() => onSelect(e)}
+            style={{ flex: "0 0 auto", cursor: "pointer", textAlign: "left",
+              background: DS.hi, color: DS.paper, border: "none",
+              padding: "8px 10px", width: 180 }}>
+            <div style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1,
+              color: "rgba(232,223,201,0.6)", marginBottom: 3 }}>
+              {e.days.map((d) => d.toUpperCase()).join(" · ")} · {e.time === "00:00" ? "all day" : e.time}
+            </div>
+            <div style={{ fontFamily: DS.fUi, fontSize: 13, fontWeight: 700, lineHeight: 1.2,
+              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {e.title}
+            </div>
+            {e.camp && <div style={{ fontFamily: DS.fMono, fontSize: 9.5, marginTop: 4,
+              color: "rgba(232,223,201,0.65)" }}>@ {e.camp}</div>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function BrowseView({ saved, onSave, onTabChange }: {
   saved: Set<string>; onSave: (id: string) => void; onTabChange: (t: TabName) => void;
 }) {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("");
+  const [locFilter, setLocFilter] = useState<"moe" | "">("");
   const [sheet, setSheet] = useState<Event | null>(null);
   const [limit, setLimit] = useState(BATCH);
   const [activeDay, setActiveDay] = useState<string>(() => {
@@ -37,11 +80,12 @@ export function BrowseView({ saved, onSave, onTabChange }: {
   const handleCatChange = useCallback((c: string) => setCat(c), []);
   const handleQueryChange = useCallback((q: string) => setQuery(q), []);
 
-  // events filtered by category + search (NOT by day — days are sections)
+  // events filtered by category + location + search (NOT by day — days are sections)
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return events.filter((e) => {
       if (cat && e.cat !== cat) return false;
+      if (locFilter === "moe" && !(e.loc ?? "").toLowerCase().includes("moe")) return false;
       if (q) {
         return e.title.toLowerCase().includes(q) ||
           e.camp.toLowerCase().includes(q) ||
@@ -50,7 +94,7 @@ export function BrowseView({ saved, onSave, onTabChange }: {
       }
       return true;
     });
-  }, [query, cat]);
+  }, [query, cat, locFilter]);
 
   // flat, day-grouped item stream: [{header}, {event}, {event}…, {header}…]
   const { items, dayCounts } = useMemo(() => {
@@ -293,7 +337,23 @@ export function BrowseView({ saved, onSave, onTabChange }: {
           <SearchInput value={query} onChange={handleQueryChange} />
           <DayTabs active={activeDay} onChange={handleDayJump} />
           <CatChips active={cat} onChange={handleCatChange} />
+          {/* MoE location chip */}
+          <div style={{ padding: "0 18px 6px 50px", flex: "0 0 auto" }}>
+            <button onClick={() => setLocFilter((l) => l === "moe" ? "" : "moe")}
+              aria-pressed={locFilter === "moe"}
+              style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                borderRadius: 2, cursor: "pointer", userSelect: "none",
+                background: locFilter === "moe" ? DS.hi : "transparent",
+                color: locFilter === "moe" ? DS.paper : DS.hi,
+                border: "1.5px solid " + DS.hi }}>
+              ◈ Middle of Elsewhere
+            </button>
+          </div>
           {!query && <NowStrip events={nowEvents} onSelect={setSheet} />}
+          {/* Featured events strip */}
+          {!query && !locFilter && (
+            <FeaturedStrip onSelect={setSheet} />
+          )}
         </>
       )}
       <TimeSlider mins={sliderMins} onChange={handleSliderChange} onReset={handleSliderReset} isRealNow={isRealNow} />
@@ -341,6 +401,17 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               padding: "10px 18px 0 50px" }}>FILTER THE PROGRAM</div>
             <SearchInput value={query} onChange={handleQueryChange} />
             <CatChips active={cat} onChange={handleCatChange} />
+            <div style={{ padding: "4px 18px 4px 50px" }}>
+              <button onClick={() => setLocFilter((l) => l === "moe" ? "" : "moe")}
+                aria-pressed={locFilter === "moe"}
+                style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                  borderRadius: 2, cursor: "pointer",
+                  background: locFilter === "moe" ? DS.hi : "transparent",
+                  color: locFilter === "moe" ? DS.paper : DS.hi,
+                  border: "1.5px solid " + DS.hi }}>
+                ◈ Middle of Elsewhere
+              </button>
+            </div>
             <button onClick={closePeek} style={{ margin: "6px 18px 0 50px", display: "block", width: "calc(100% - 68px)", textAlign: "center", cursor: "pointer",
               fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, color: DS.paper, background: DS.hi,
               padding: "7px", borderRadius: 3, border: "none" }}>Done ✶</button>
