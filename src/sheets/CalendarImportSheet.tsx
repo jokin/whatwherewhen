@@ -123,32 +123,22 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
             <div style={{ background: DS.hi, color: DS.paper, padding: "12px 14px", marginBottom: 14 }}>
               <div style={{ fontFamily: DS.fMono, fontSize: 9.5, letterSpacing: 1,
                 color: "rgba(232,223,201,0.6)", marginBottom: 6 }}>FROM HUMANS APP</div>
-              <div style={{ fontFamily: DS.fUi, fontSize: 13, lineHeight: 1.55, marginBottom: 10 }}>
-                Go to <a href="https://humans.nobodies.team/Shifts/Mine" target="_blank" rel="noopener noreferrer"
-                  style={{ color: DS.paper, fontWeight: 700, textDecoration: "underline" }}>
-                  humans.nobodies.team/Shifts/Mine
-                </a>, find your iCal feed link and paste it below — or download the .ics file and upload it.
+              <div style={{ fontFamily: DS.fUi, fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
+                1. Open your shifts page<br />
+                2. Find the iCal link and open it — your browser will download a .ics file<br />
+                3. Come back here and upload it below
               </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input value={url} onChange={(e) => setUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleUrl()}
-                  placeholder="https://humans.nobodies.team/api/ical/…"
-                  style={{ flex: 1, fontFamily: DS.fMono, fontSize: 11, padding: "8px 10px",
-                    border: "1.5px solid rgba(232,223,201,0.35)", background: "rgba(232,223,201,0.12)",
-                    color: DS.paper, outline: "none", minWidth: 0 }} />
-                <button onClick={handleUrl} disabled={!url.trim()}
-                  style={{ flex: "0 0 auto", fontFamily: DS.fUi, fontSize: 12, fontWeight: 700,
-                    color: DS.hi, background: url.trim() ? DS.paper : "rgba(232,223,201,0.3)",
-                    border: "none", padding: "0 12px", cursor: url.trim() ? "pointer" : "default" }}>
-                  Load ↗
-                </button>
-              </div>
+              <a href="https://humans.nobodies.team/Shifts/Mine" target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-block", fontFamily: DS.fUi, fontSize: 12, fontWeight: 700,
+                  color: DS.hi, background: DS.paper, padding: "8px 14px", textDecoration: "none" }}>
+                Open humans.nobodies.team/Shifts/Mine ↗
+              </a>
             </div>
 
             {/* divider */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "14px 0" }}>
               <div style={{ flex: 1, borderTop: "2px dotted rgba(38,48,42,0.3)" }} />
-              <span style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.muted }}>OR UPLOAD A FILE</span>
+              <span style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.muted }}>UPLOAD YOUR FILE</span>
               <div style={{ flex: 1, borderTop: "2px dotted rgba(38,48,42,0.3)" }} />
             </div>
 
