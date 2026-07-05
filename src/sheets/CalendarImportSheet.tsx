@@ -46,8 +46,16 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
     }
   };
 
+  const isHumansUrl = (u: string) => u.includes("humans.nobodies.team");
+
   const handleUrl = async () => {
     const u = url.trim(); if (!u) return;
+    // Humans app blocks CORS — skip the fetch and guide user to download instead
+    if (isHumansUrl(u)) {
+      setPhase("error");
+      setErrorMsg("__humans__");
+      return;
+    }
     setPhase("loading");
     try {
       const res = await fetch(u);
@@ -159,10 +167,30 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
 
             {/* error */}
             {phase === "error" && (
-              <div style={{ marginTop: 14, background: "#f9e8e4", border: "1.5px solid " + DS.accent,
-                padding: "10px 12px", fontFamily: DS.fUi, fontSize: 12.5, color: DS.accent, lineHeight: 1.5 }}>
-                {errorMsg}
-              </div>
+              errorMsg === "__humans__" ? (
+                <div style={{ marginTop: 14, background: DS.paper, border: "1.5px solid " + DS.hi,
+                  padding: "12px 14px", fontFamily: DS.fUi, fontSize: 12.5, color: DS.ink, lineHeight: 1.6 }}>
+                  <div style={{ fontFamily: DS.fMono, fontSize: 10, letterSpacing: 1, color: DS.brown, marginBottom: 6 }}>
+                    HOW TO GET THE FILE
+                  </div>
+                  <ol style={{ margin: "0 0 0 16px", padding: 0, fontFamily: DS.fUi, fontSize: 12.5, lineHeight: 1.8 }}>
+                    <li>Open the link in your browser</li>
+                    <li>The .ics file will download automatically</li>
+                    <li>Come back here and tap <strong>Upload .ics file</strong> below</li>
+                  </ol>
+                  <a href={url.trim()} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "inline-block", marginTop: 10,
+                      fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, color: DS.paper,
+                      background: DS.hi, padding: "7px 12px", textDecoration: "none" }}>
+                    Open link to download ↗
+                  </a>
+                </div>
+              ) : (
+                <div style={{ marginTop: 14, background: "#f9e8e4", border: "1.5px solid " + DS.accent,
+                  padding: "10px 12px", fontFamily: DS.fUi, fontSize: 12.5, color: DS.accent, lineHeight: 1.5 }}>
+                  {errorMsg}
+                </div>
+              )
             )}
 
             {/* hint */}
