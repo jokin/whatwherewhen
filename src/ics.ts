@@ -57,6 +57,43 @@ export function downloadICS(events: Event[]): void {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+export function parseICS(text: string): { uid: string; summary: string }[] {
+  const vevents: { uid: string; summary: string }[] = [];
+  let inEvent = false, uid = "", summary = "";
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line === "BEGIN:VEVENT") { inEvent = true; uid = ""; summary = ""; }
+    else if (line === "END:VEVENT") { if (inEvent) vevents.push({ uid, summary }); inEvent = false; }
+    else if (inEvent) {
+      if (line.startsWith("UID:")) uid = line.slice(4);
+      else if (line.startsWith("SUMMARY:"))
+        summary = line.slice(8).replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
+    }
+  }
+  return vevents;
+}
+
+function norm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function matchICSToEvents(parsed: { uid: string; summary: string }[], allEvents: Event[]): string[] {
+  const ids = new Set<string>();
+  for (const { uid, summary } of parsed) {
+    // Our own export UID format: {id}-{day}@elsewhere26
+    const m = uid.match(/^(.+)-(Tue|Wed|Thu|Fri|Sat|Sun)@elsewhere26$/);
+    if (m) {
+      const ev = allEvents.find((e) => e.id === m[1]);
+      if (ev) { ids.add(ev.id); continue; }
+    }
+    // Fallback: normalised title match
+    const ns = norm(summary);
+    const ev = allEvents.find((e) => norm(e.title) === ns);
+    if (ev) ids.add(ev.id);
+  }
+  return [...ids];
+}
+
 export function buildGCalUrl(event: Event, day?: string): string {
   const d = CAL_DATES[day || event.days[0]];
   if (!d) return "#";

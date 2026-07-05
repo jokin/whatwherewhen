@@ -4,6 +4,7 @@ import { events } from "../data";
 import { Phone, StatusBar, AdmitStrip, StubCard, Nav } from "../components/ui";
 import { EventSheet } from "../sheets/EventSheet";
 import { CalendarExportSheet } from "../sheets/CalendarExportSheet";
+import { CalendarImportSheet } from "../sheets/CalendarImportSheet";
 import type { Event, TabName } from "../types";
 
 export function MineView({ saved, onSave, onTabChange }: {
@@ -11,6 +12,11 @@ export function MineView({ saved, onSave, onTabChange }: {
 }) {
   const [sheet, setSheet] = useState<Event | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const handleImport = (ids: string[]) => {
+    for (const id of ids) if (!saved.has(id)) onSave(id);
+  };
   const savedEvents = useMemo(() =>
     events.filter((e) => saved.has(e.id)), [saved]);
 
@@ -37,17 +43,24 @@ export function MineView({ saved, onSave, onTabChange }: {
               {savedEvents.length} saved · tap to view
             </div>
           </div>
-          {savedEvents.length > 0 && (
-            <button onClick={() => setExportOpen(true)} style={{
-              flex: "0 0 auto", marginTop: 4,
-              fontFamily: DS.fUi, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
-              color: DS.paper, background: DS.hi,
-              border: "none", padding: "6px 10px", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 5,
-            }}>
-              <span style={{ fontSize: 13 }}>◈</span> EXPORT
+          <div style={{ display: "flex", gap: 6, marginTop: 4, flex: "0 0 auto" }}>
+            <button onClick={() => setImportOpen(true)}
+              style={{ fontFamily: DS.fUi, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                color: DS.hi, background: "transparent",
+                border: "1.5px solid " + DS.hi, padding: "6px 10px", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: 13 }}>↑</span> IMPORT
             </button>
-          )}
+            {savedEvents.length > 0 && (
+              <button onClick={() => setExportOpen(true)}
+                style={{ fontFamily: DS.fUi, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                  color: DS.paper, background: DS.hi,
+                  border: "none", padding: "6px 10px", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ fontSize: 13 }}>◈</span> EXPORT
+              </button>
+            )}
+          </div>
         </div>
       </div>
       {savedEvents.length === 0
@@ -84,6 +97,7 @@ export function MineView({ saved, onSave, onTabChange }: {
       <Nav active="Mine" onChange={onTabChange} />
       {sheet && <EventSheet event={sheet} saved={saved.has(sheet.id)} onClose={() => setSheet(null)} onSave={onSave} />}
       {exportOpen && <CalendarExportSheet events={savedEvents} onClose={() => setExportOpen(false)} />}
+      {importOpen && <CalendarImportSheet saved={saved} onClose={() => setImportOpen(false)} onImport={handleImport} />}
     </Phone>
   );
 }

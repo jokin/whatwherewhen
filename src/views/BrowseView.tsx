@@ -1,37 +1,97 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { DS, DAYS, DAY_FULL, DAY_DATES, CATS } from "../ds";
 import { events } from "../data";
-import { Phone, StatusBar, AdmitStrip, SearchInput, DayTabs, CatChips, NowStrip, StubCard, Nav, Ransom } from "../components/ui";
+import { Phone, StatusBar, AdmitStrip, SearchInput, DayTabs, CatChips, NowStrip, StubCard, Nav, Ransom, TimeSlider } from "../components/ui";
 import { EventSheet } from "../sheets/EventSheet";
+import { timeToMins, getRealNowMins, getFestivalDay } from "../helpers";
 import type { Event, TabName } from "../types";
 
 const BATCH = 50;
 
+const FEATURED_IDS = new Set([
+  "3fe82765-7615-457f-aa43-bb97ed0b1eb6", // Elsew...at? No way! WTF is going on?!
+  "549ba833-5771-43df-b7b6-218cba53f893", // New Land for Elsewhere
+  "76aacca8-24e6-4e10-81ab-1346df752023", // Shit Ninja Training
+  "7179ff96-1cee-49b2-b464-25f6aa0560a9", // Volunteers meetup and party
+  "f1ada340-926e-4d07-a6ec-881a4d384cc5", // How to make your barrio more inclusive?
+]);
+
+const MOE_LOC = "moe - middle of elsewhere";
+const moeEvents = events.filter((e) => (e.loc ?? "").toLowerCase().includes("moe"));
+
 type ListItem =
   | { type: "header"; day: string; count: number }
   | { type: "event"; e: Event; day: string; i: number };
+
+function FeaturedStrip({ onSelect }: { onSelect: (e: Event) => void }) {
+  const featuredEvents = events.filter((e) => FEATURED_IDS.has(e.id));
+  if (!featuredEvents.length) return null;
+  return (
+    <div style={{ flex: "0 0 auto", padding: "4px 0 6px" }}>
+      <div style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.brown,
+        padding: "0 18px 4px 50px" }}>✶ DON'T MISS</div>
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 18px 2px 50px",
+        scrollbarWidth: "none" }}>
+        {featuredEvents.map((e) => (
+          <button key={e.id} onClick={() => onSelect(e)}
+            style={{ flex: "0 0 auto", cursor: "pointer", textAlign: "left",
+              background: DS.hi, color: DS.paper, border: "none",
+              padding: "8px 10px", width: 180 }}>
+            <div style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1,
+              color: "rgba(232,223,201,0.6)", marginBottom: 3 }}>
+              {e.days.map((d) => d.toUpperCase()).join(" · ")} · {e.time === "00:00" ? "all day" : e.time}
+            </div>
+            <div style={{ fontFamily: DS.fUi, fontSize: 13, fontWeight: 700, lineHeight: 1.2,
+              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {e.title}
+            </div>
+            {e.camp && <div style={{ fontFamily: DS.fMono, fontSize: 9.5, marginTop: 4,
+              color: "rgba(232,223,201,0.65)" }}>@ {e.camp}</div>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function BrowseView({ saved, onSave, onTabChange }: {
   saved: Set<string>; onSave: (id: string) => void; onTabChange: (t: TabName) => void;
 }) {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("");
+  const [locFilter, setLocFilter] = useState<"moe" | "domes" | "night" | "">("");
   const [sheet, setSheet] = useState<Event | null>(null);
   const [limit, setLimit] = useState(BATCH);
   const [activeDay, setActiveDay] = useState<string>(() => {
+    const fd = getFestivalDay();
+    if (fd) return fd;
     for (const d of DAYS) if (events.some((e) => e.days.includes(d))) return d;
     return DAYS[0];
   });
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Time-travel: sliderMins drives "now" highlighting and list position.
+  // realNowMins is fixed at mount; isRealNow means slider is at real current time.
+  const realNowMins = useRef(getRealNowMins());
+  const [sliderMins, setSliderMins] = useState(getRealNowMins);
+  const isRealNow = Math.abs(sliderMins - realNowMins.current) < 2;
+  const sliderDragging = useRef(false);
+
   const handleCatChange = useCallback((c: string) => setCat(c), []);
   const handleQueryChange = useCallback((q: string) => setQuery(q), []);
 
-  // events filtered by category + search (NOT by day — days are sections)
+  // events filtered by category + location + search (NOT by day — days are sections)
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return events.filter((e) => {
       if (cat && e.cat !== cat) return false;
+      if (locFilter === "moe" && !(e.loc ?? "").toLowerCase().includes("moe")) return false;
+      if (locFilter === "domes" && !(e.loc ?? "").toLowerCase().includes("dome")) return false;
+      if (locFilter === "night") {
+        if (!e.time || e.time === "00:00") return false;
+        const m = timeToMins(e.time);
+        if (m < 23 * 60 && m > 4 * 60) return false;
+      }
       if (q) {
         return e.title.toLowerCase().includes(q) ||
           e.camp.toLowerCase().includes(q) ||
@@ -40,7 +100,7 @@ export function BrowseView({ saved, onSave, onTabChange }: {
       }
       return true;
     });
-  }, [query, cat]);
+  }, [query, cat, locFilter]);
 
   // flat, day-grouped item stream: [{header}, {event}, {event}…, {header}…]
   const { items, dayCounts } = useMemo(() => {
@@ -64,8 +124,15 @@ export function BrowseView({ saved, onSave, onTabChange }: {
   const limitRef = useRef(limit); limitRef.current = limit;
   const activeDayRef = useRef(activeDay); activeDayRef.current = activeDay;
 
+  // Events happening "now" at the current slider time on the active day.
   const nowEvents = useMemo(() =>
-    filtered.filter((e) => e.recur && e.days.includes(activeDay)), [filtered, activeDay]);
+    filtered.filter((e) => {
+      if (!e.days.includes(activeDay)) return false;
+      if (e.time === "00:00") return false;
+      const start = timeToMins(e.time);
+      const end = start + (e.dur > 0 ? e.dur : 60);
+      return sliderMins >= start && sliderMins < end;
+    }), [filtered, activeDay, sliderMins]);
 
   // collapsing header + tap-to-reveal filters
   const [collapsed, setCollapsed] = useState(false);
@@ -98,6 +165,21 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     setCollapsed(el.scrollTop > 56);              // collapse header once we're past the top
   }, []);
 
+  const scrollToTimeMins = useCallback((targetMins: number) => {
+    const el = listRef.current; if (!el) return;
+    const evEls = el.querySelectorAll<HTMLElement>("[data-event-time]");
+    let target: HTMLElement | null = null;
+    for (const ev of evEls) {
+      const t = ev.getAttribute("data-event-time")!;
+      if (t === "00:00") continue;
+      if (timeToMins(t) >= targetMins) { target = ev; break; }
+    }
+    if (target) {
+      el.scrollTop = Math.max(0, target.offsetTop - 100);
+      setCollapsed(el.scrollTop > 56);
+    }
+  }, []);
+
   // jump the list to a day section (day tabs act as anchors, not filters)
   const handleDayJump = useCallback((day: string) => {
     setFiltersOpen(false);
@@ -113,6 +195,33 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     if (pendingDay) { scrollToDay(pendingDay); setPendingDay(null); }
   }, [limit, pendingDay, scrollToDay]);
 
+  // On mount: scroll to current real time within the active day.
+  // Uses a one-shot ref so it only fires once after first render.
+  const didInitScroll = useRef(false);
+  useEffect(() => {
+    if (didInitScroll.current) return;
+    didInitScroll.current = true;
+    // Defer to let the list paint first
+    const id = requestAnimationFrame(() => scrollToTimeMins(realNowMins.current));
+    return () => cancelAnimationFrame(id);
+  }, [scrollToTimeMins]);
+
+  // When the slider is moved, scroll the list to that time.
+  const handleSliderChange = useCallback((m: number) => {
+    sliderDragging.current = true;
+    setSliderMins(m);
+    scrollToTimeMins(m);
+    // allow scroll-spy to resume after the programmatic scroll settles
+    setTimeout(() => { sliderDragging.current = false; }, 300);
+  }, [scrollToTimeMins]);
+
+  const handleSliderReset = useCallback(() => {
+    const m = getRealNowMins();
+    realNowMins.current = m;
+    setSliderMins(m);
+    scrollToTimeMins(m);
+  }, [scrollToTimeMins]);
+
   const onScroll = useCallback(() => {
     const el = listRef.current; if (!el) return;
     const st = el.scrollTop;
@@ -126,6 +235,18 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     let cur: string | null = null;
     for (const h of heads) { if (h.offsetTop - st <= 84) cur = h.getAttribute("data-day-header"); else break; }
     if (cur) setActiveDay((prev) => cur !== prev ? cur! : prev);
+    // sync slider to topmost event's time (unless slider is being dragged)
+    if (!sliderDragging.current) {
+      const evEls = el.querySelectorAll<HTMLElement>("[data-event-time]");
+      let topMins: number | null = null;
+      for (const ev of evEls) {
+        const t = ev.getAttribute("data-event-time");
+        if (!t || t === "00:00") continue;
+        if (ev.offsetTop - st <= 130) topMins = timeToMins(t);
+        else break;
+      }
+      if (topMins !== null) setSliderMins(topMins);
+    }
   }, []);
 
   const closePeek = useCallback(() => {
@@ -222,9 +343,32 @@ export function BrowseView({ saved, onSave, onTabChange }: {
           <SearchInput value={query} onChange={handleQueryChange} />
           <DayTabs active={activeDay} onChange={handleDayJump} />
           <CatChips active={cat} onChange={handleCatChange} />
+          {/* Location / time chips */}
+          <div style={{ padding: "0 18px 6px 50px", flex: "0 0 auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {(["moe", "domes", "night"] as const).map((f) => {
+              const active = locFilter === f;
+              const label = f === "moe" ? "◈ Middle of Elsewhere" : f === "domes" ? "○ Domes" : "☽ Night";
+              return (
+                <button key={f} onClick={() => setLocFilter((l) => l === f ? "" : f)}
+                  aria-pressed={active}
+                  style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                    borderRadius: 2, cursor: "pointer", userSelect: "none",
+                    background: active ? DS.hi : "transparent",
+                    color: active ? DS.paper : DS.hi,
+                    border: "1.5px solid " + DS.hi }}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           {!query && <NowStrip events={nowEvents} onSelect={setSheet} />}
+          {/* Featured events strip */}
+          {!query && !locFilter && (
+            <FeaturedStrip onSelect={setSheet} />
+          )}
         </>
       )}
+      <TimeSlider mins={sliderMins} onChange={handleSliderChange} onReset={handleSliderReset} isRealNow={isRealNow} />
       {/* continuous, day-grouped list — infinite scroll */}
       <div ref={listRef} onScroll={onScroll} style={{ flex: "1 1 auto", overflowY: "auto", padding: "4px 18px 0 50px",
         position: "relative" }}>
@@ -243,8 +387,10 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               <span style={{ marginLeft: "auto", fontFamily: DS.fMono, fontSize: 10.5, color: DS.brown, letterSpacing: 1 }}>✶ {DAY_DATES[it.day]}</span>
             </div>
           ) : (
-            <StubCard key={it.e.id + "-" + it.day + "-" + it.i} event={it.e} index={it.i}
-              saved={saved.has(it.e.id)} onSelect={setSheet} onSave={onSave} />
+            <div key={it.e.id + "-" + it.day + "-" + it.i} data-event-time={it.e.time} className="grid-full">
+              <StubCard event={it.e} index={it.i}
+                saved={saved.has(it.e.id)} onSelect={setSheet} onSave={onSave} />
+            </div>
           ))}
           {limit < items.length && (
             <div className="grid-full" style={{ padding: "14px 0 20px", textAlign: "center",
@@ -267,6 +413,23 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               padding: "10px 18px 0 50px" }}>FILTER THE PROGRAM</div>
             <SearchInput value={query} onChange={handleQueryChange} />
             <CatChips active={cat} onChange={handleCatChange} />
+            <div style={{ padding: "4px 18px 4px 50px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {(["moe", "domes", "night"] as const).map((f) => {
+                const active = locFilter === f;
+                const label = f === "moe" ? "◈ Middle of Elsewhere" : f === "domes" ? "○ Domes" : "☽ Night";
+                return (
+                  <button key={f} onClick={() => setLocFilter((l) => l === f ? "" : f)}
+                    aria-pressed={active}
+                    style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                      borderRadius: 2, cursor: "pointer",
+                      background: active ? DS.hi : "transparent",
+                      color: active ? DS.paper : DS.hi,
+                      border: "1.5px solid " + DS.hi }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
             <button onClick={closePeek} style={{ margin: "6px 18px 0 50px", display: "block", width: "calc(100% - 68px)", textAlign: "center", cursor: "pointer",
               fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, color: DS.paper, background: DS.hi,
               padding: "7px", borderRadius: 3, border: "none" }}>Done ✶</button>

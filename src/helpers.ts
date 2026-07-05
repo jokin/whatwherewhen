@@ -1,7 +1,45 @@
 import { camps } from "./data";
+import { DAYS, DAY_DATES } from "./ds";
 
 export function fmtTime(t: string): string {
   return !t || t === "00:00" ? "all day" : t;
+}
+
+export function timeToMins(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function minsToHHMM(mins: number): string {
+  const clamped = ((mins % 1440) + 1440) % 1440;
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+export function getRealNowMins(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+// Returns festival day short name ("Tue"…"Sun") if today is during the festival, else null.
+export function getFestivalDay(): string | null {
+  const now = new Date();
+  const mmdd = String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  const entry = Object.entries(DAY_DATES).find(([, v]) => v.replace(" ", "-0") === mmdd || v === mmdd.replace("0", " ").trimStart());
+  // DAY_DATES values are like "07 JUL" — match by converting to date
+  const year = now.getFullYear();
+  const isoDate = now.toISOString().slice(0, 10);
+  const dateMap: Record<string, string> = {};
+  const monthNames = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  for (const day of DAYS) {
+    const parts = DAY_DATES[day].split(" "); // e.g. ["07", "JUL"]
+    const mo = monthNames.indexOf(parts[1]) + 1;
+    const dt = parseInt(parts[0]);
+    dateMap[`${year}-${String(mo).padStart(2,"0")}-${String(dt).padStart(2,"0")}`] = day;
+  }
+  return dateMap[isoDate] ?? null;
+  void entry;
 }
 
 // ---- orbit ring roads: smooth closed loop through the camps in plan order ----

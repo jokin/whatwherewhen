@@ -13,11 +13,12 @@
       "runtimeArgs": ["run", "preview", "--", "--port", "4173", "--strictPort"],
       "port": 4173
     }
-w  ,{
+  ,{
       "name": "magazine",
       "runtimeExecutable": "node",
       "runtimeArgs": ["/tmp/serve-magazine.js"],
-      "port": 5199
+      "port": 5199,
+      "autoPort": true
     }
   ]
 }
