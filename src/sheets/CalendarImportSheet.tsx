@@ -118,22 +118,28 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
 
           {/* ── input phase ── */}
           {(phase === "input" || phase === "error") && (<>
-            {/* URL input */}
-            <div style={{ marginBottom: 6 }}>
-              <div style={{ fontFamily: DS.fMono, fontSize: 9.5, letterSpacing: 1, color: DS.brown, marginBottom: 6 }}>
-                PASTE YOUR HUMANS APP CALENDAR LINK
+
+            {/* Humans app block */}
+            <div style={{ background: DS.hi, color: DS.paper, padding: "12px 14px", marginBottom: 14 }}>
+              <div style={{ fontFamily: DS.fMono, fontSize: 9.5, letterSpacing: 1,
+                color: "rgba(232,223,201,0.6)", marginBottom: 6 }}>FROM HUMANS APP</div>
+              <div style={{ fontFamily: DS.fUi, fontSize: 13, lineHeight: 1.55, marginBottom: 10 }}>
+                Go to <a href="https://humans.nobodies.team/Shifts/Mine" target="_blank" rel="noopener noreferrer"
+                  style={{ color: DS.paper, fontWeight: 700, textDecoration: "underline" }}>
+                  humans.nobodies.team/Shifts/Mine
+                </a>, find your iCal feed link and paste it below — or download the .ics file and upload it.
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <input value={url} onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleUrl()}
                   placeholder="https://humans.nobodies.team/api/ical/…"
-                  style={{ flex: 1, fontFamily: DS.fMono, fontSize: 12, padding: "9px 10px",
-                    border: "1.5px solid rgba(38,48,42,0.4)", background: DS.paper,
-                    color: DS.ink, outline: "none", minWidth: 0 }} />
+                  style={{ flex: 1, fontFamily: DS.fMono, fontSize: 11, padding: "8px 10px",
+                    border: "1.5px solid rgba(232,223,201,0.35)", background: "rgba(232,223,201,0.12)",
+                    color: DS.paper, outline: "none", minWidth: 0 }} />
                 <button onClick={handleUrl} disabled={!url.trim()}
                   style={{ flex: "0 0 auto", fontFamily: DS.fUi, fontSize: 12, fontWeight: 700,
-                    color: DS.paper, background: url.trim() ? DS.hi : DS.muted,
-                    border: "none", padding: "0 14px", cursor: url.trim() ? "pointer" : "default" }}>
+                    color: DS.hi, background: url.trim() ? DS.paper : "rgba(232,223,201,0.3)",
+                    border: "none", padding: "0 12px", cursor: url.trim() ? "pointer" : "default" }}>
                   Load ↗
                 </button>
               </div>
@@ -142,7 +148,7 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
             {/* divider */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "14px 0" }}>
               <div style={{ flex: 1, borderTop: "2px dotted rgba(38,48,42,0.3)" }} />
-              <span style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.muted }}>OR</span>
+              <span style={{ fontFamily: DS.fMono, fontSize: 9, letterSpacing: 1.5, color: DS.muted }}>OR UPLOAD A FILE</span>
               <div style={{ flex: 1, borderTop: "2px dotted rgba(38,48,42,0.3)" }} />
             </div>
 
