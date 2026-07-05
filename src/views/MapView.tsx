@@ -354,13 +354,13 @@ export function MapView({ saved, onSave, onTabChange }: {
             fontWeight="bold" textAnchor="middle" opacity="0.7" style={{ pointerEvents: "none" }}>GATE ⟶</text>
         </svg>
 
-        {/* MoE panel */}
-        {selMoE && (
+      </div>
+
+      {/* MoE panel — outside touch-action:none wrapper so scroll works */}
+      {selMoE && (
           <div onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
             style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "52%",
+            position: "absolute", left: 0, right: 0, bottom: 56, maxHeight: "52%",
             background: DS.card, borderTop: "2px solid " + DS.hi,
             display: "flex", flexDirection: "column", zIndex: 10,
           }}>
@@ -415,13 +415,11 @@ export function MapView({ saved, onSave, onTabChange }: {
           </div>
         )}
 
-        {/* Camp bottom panel */}
-        {selCamp && (
+      {/* Camp bottom panel */}
+      {selCamp && (
           <div onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
             style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "48%",
+            position: "absolute", left: 0, right: 0, bottom: 56, maxHeight: "48%",
             background: DS.card, borderTop: "2px solid " + DS.ink,
             display: "flex", flexDirection: "column", zIndex: 10,
           }}>
@@ -475,13 +473,11 @@ export function MapView({ saved, onSave, onTabChange }: {
           </div>
         )}
 
-        {/* Art installation panel */}
-        {selArt && (
+      {/* Art installation panel */}
+      {selArt && (
           <div onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
             style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "48%",
+            position: "absolute", left: 0, right: 0, bottom: 56, maxHeight: "48%",
             background: DS.card, borderTop: "2px solid " + DS.accent,
             display: "flex", flexDirection: "column", zIndex: 10,
           }}>
@@ -534,7 +530,6 @@ export function MapView({ saved, onSave, onTabChange }: {
             </div>
           </div>
         )}
-      </div>
 
       <Nav active="Map" onChange={onTabChange} />
       {sheet && <EventSheet event={sheet} saved={saved.has(sheet.id)} onClose={() => setSheet(null)} onSave={onSave} />}
