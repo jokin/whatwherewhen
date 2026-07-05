@@ -59,7 +59,7 @@ export function BrowseView({ saved, onSave, onTabChange }: {
 }) {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("");
-  const [locFilter, setLocFilter] = useState<"moe" | "">("");
+  const [locFilter, setLocFilter] = useState<"moe" | "domes" | "night" | "">("");
   const [sheet, setSheet] = useState<Event | null>(null);
   const [limit, setLimit] = useState(BATCH);
   const [activeDay, setActiveDay] = useState<string>(() => {
@@ -86,6 +86,12 @@ export function BrowseView({ saved, onSave, onTabChange }: {
     return events.filter((e) => {
       if (cat && e.cat !== cat) return false;
       if (locFilter === "moe" && !(e.loc ?? "").toLowerCase().includes("moe")) return false;
+      if (locFilter === "domes" && !(e.loc ?? "").toLowerCase().includes("dome")) return false;
+      if (locFilter === "night") {
+        if (!e.time || e.time === "00:00") return false;
+        const m = timeToMins(e.time);
+        if (m < 23 * 60 && m > 4 * 60) return false;
+      }
       if (q) {
         return e.title.toLowerCase().includes(q) ||
           e.camp.toLowerCase().includes(q) ||
@@ -337,17 +343,23 @@ export function BrowseView({ saved, onSave, onTabChange }: {
           <SearchInput value={query} onChange={handleQueryChange} />
           <DayTabs active={activeDay} onChange={handleDayJump} />
           <CatChips active={cat} onChange={handleCatChange} />
-          {/* MoE location chip */}
-          <div style={{ padding: "0 18px 6px 50px", flex: "0 0 auto" }}>
-            <button onClick={() => setLocFilter((l) => l === "moe" ? "" : "moe")}
-              aria-pressed={locFilter === "moe"}
-              style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
-                borderRadius: 2, cursor: "pointer", userSelect: "none",
-                background: locFilter === "moe" ? DS.hi : "transparent",
-                color: locFilter === "moe" ? DS.paper : DS.hi,
-                border: "1.5px solid " + DS.hi }}>
-              ◈ Middle of Elsewhere
-            </button>
+          {/* Location / time chips */}
+          <div style={{ padding: "0 18px 6px 50px", flex: "0 0 auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {(["moe", "domes", "night"] as const).map((f) => {
+              const active = locFilter === f;
+              const label = f === "moe" ? "◈ Middle of Elsewhere" : f === "domes" ? "○ Domes" : "☽ Night";
+              return (
+                <button key={f} onClick={() => setLocFilter((l) => l === f ? "" : f)}
+                  aria-pressed={active}
+                  style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                    borderRadius: 2, cursor: "pointer", userSelect: "none",
+                    background: active ? DS.hi : "transparent",
+                    color: active ? DS.paper : DS.hi,
+                    border: "1.5px solid " + DS.hi }}>
+                  {label}
+                </button>
+              );
+            })}
           </div>
           {!query && <NowStrip events={nowEvents} onSelect={setSheet} />}
           {/* Featured events strip */}
@@ -401,16 +413,22 @@ export function BrowseView({ saved, onSave, onTabChange }: {
               padding: "10px 18px 0 50px" }}>FILTER THE PROGRAM</div>
             <SearchInput value={query} onChange={handleQueryChange} />
             <CatChips active={cat} onChange={handleCatChange} />
-            <div style={{ padding: "4px 18px 4px 50px" }}>
-              <button onClick={() => setLocFilter((l) => l === "moe" ? "" : "moe")}
-                aria-pressed={locFilter === "moe"}
-                style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
-                  borderRadius: 2, cursor: "pointer",
-                  background: locFilter === "moe" ? DS.hi : "transparent",
-                  color: locFilter === "moe" ? DS.paper : DS.hi,
-                  border: "1.5px solid " + DS.hi }}>
-                ◈ Middle of Elsewhere
-              </button>
+            <div style={{ padding: "4px 18px 4px 50px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {(["moe", "domes", "night"] as const).map((f) => {
+                const active = locFilter === f;
+                const label = f === "moe" ? "◈ Middle of Elsewhere" : f === "domes" ? "○ Domes" : "☽ Night";
+                return (
+                  <button key={f} onClick={() => setLocFilter((l) => l === f ? "" : f)}
+                    aria-pressed={active}
+                    style={{ fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, padding: "4px 10px",
+                      borderRadius: 2, cursor: "pointer",
+                      background: active ? DS.hi : "transparent",
+                      color: active ? DS.paper : DS.hi,
+                      border: "1.5px solid " + DS.hi }}>
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             <button onClick={closePeek} style={{ margin: "6px 18px 0 50px", display: "block", width: "calc(100% - 68px)", textAlign: "center", cursor: "pointer",
               fontFamily: DS.fUi, fontSize: 12, fontWeight: 700, color: DS.paper, background: DS.hi,

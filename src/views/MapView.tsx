@@ -356,7 +356,10 @@ export function MapView({ saved, onSave, onTabChange }: {
 
         {/* MoE panel */}
         {selMoE && (
-          <div onClick={(e) => e.stopPropagation()} style={{
+          <div onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            style={{
             position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "52%",
             background: DS.card, borderTop: "2px solid " + DS.hi,
             display: "flex", flexDirection: "column", zIndex: 10,
@@ -414,7 +417,10 @@ export function MapView({ saved, onSave, onTabChange }: {
 
         {/* Camp bottom panel */}
         {selCamp && (
-          <div onClick={(e) => e.stopPropagation()} style={{
+          <div onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            style={{
             position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "48%",
             background: DS.card, borderTop: "2px solid " + DS.ink,
             display: "flex", flexDirection: "column", zIndex: 10,
@@ -471,7 +477,10 @@ export function MapView({ saved, onSave, onTabChange }: {
 
         {/* Art installation panel */}
         {selArt && (
-          <div onClick={(e) => e.stopPropagation()} style={{
+          <div onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            style={{
             position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "48%",
             background: DS.card, borderTop: "2px solid " + DS.accent,
             display: "flex", flexDirection: "column", zIndex: 10,
