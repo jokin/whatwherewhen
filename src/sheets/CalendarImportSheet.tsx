@@ -167,8 +167,13 @@ export function CalendarImportSheet({ saved, onClose, onImport }: {
 
             {/* hint */}
             <div style={{ marginTop: 16, background: DS.paper, border: "1px solid rgba(38,48,42,0.15)",
-              padding: "8px 10px", fontFamily: DS.fMono, fontSize: 9.5, color: DS.muted, lineHeight: 1.65 }}>
-              <span style={{ color: DS.ink, fontWeight: 700 }}>Humans app</span> → Profile → Export calendar &nbsp;✶&nbsp;
+              padding: "8px 10px", fontFamily: DS.fMono, fontSize: 9.5, color: DS.muted, lineHeight: 1.8 }}>
+              <span style={{ color: DS.ink, fontWeight: 700 }}>Humans app</span> → go to{" "}
+              <a href="https://humans.nobodies.team/Shifts/Mine" target="_blank" rel="noopener noreferrer"
+                style={{ color: DS.accent, textDecoration: "underline" }}>
+                humans.nobodies.team/Shifts/Mine
+              </a>{" "}→ copy the iCal feed link
+              <br />
               <span style={{ color: DS.ink, fontWeight: 700 }}>Apple Calendar</span> → File → Export &nbsp;✶&nbsp;
               <span style={{ color: DS.ink, fontWeight: 700 }}>Google</span> → Settings → Export
             </div>
