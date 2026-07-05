@@ -229,18 +229,45 @@ export function MapView({ saved, onSave, onTabChange }: {
             {NORGS.map(([path, name]) => {
               const isMoE = name === "MoE";
               return (
-                <g key={name} filter="url(#rough)"
+                <g key={name} filter={isMoE ? undefined : "url(#rough)"}
                   style={isMoE ? { cursor: "pointer" } : undefined}
                   onClick={isMoE ? (e) => { e.stopPropagation(); setSelCamp(null); setSelArt(null); setSelMoE((v) => !v); } : undefined}>
                   <path d={path}
-                    fill={isMoE && selMoE ? "rgba(46,68,57,0.35)" : isMoE ? "rgba(46,68,57,0.18)" : "rgba(90,65,40,0.12)"}
-                    stroke={isMoE ? "rgba(46,68,57,0.7)" : "rgba(90,65,40,0.5)"}
-                    strokeWidth={isMoE ? "1.1" : "0.7"}
+                    fill={isMoE ? (selMoE ? "rgba(46,68,57,0.6)" : "rgba(46,68,57,0.4)") : "rgba(90,65,40,0.12)"}
+                    stroke={isMoE ? "rgba(46,68,57,0.9)" : "rgba(90,65,40,0.5)"}
+                    strokeWidth={isMoE ? "1.5" : "0.7"}
                     strokeDasharray={isMoE ? "none" : "1.8 1.2"}
                     strokeLinejoin="round"/>
                 </g>
               );
             })}
+
+            {/* MoE — large invisible hit area + visible marker */}
+            {(() => {
+              const MOE_CX = 95.8, MOE_CY = 80.9;
+              return (
+                <g style={{ cursor: "pointer" }}
+                  onClick={(e) => { e.stopPropagation(); setSelCamp(null); setSelArt(null); setSelMoE((v) => !v); }}>
+                  {/* transparent hit area */}
+                  <circle cx={MOE_CX} cy={MOE_CY} r={9} fill="transparent" />
+                  {/* outer pulse ring */}
+                  <circle cx={MOE_CX} cy={MOE_CY} r={selMoE ? 7 : 6}
+                    fill="none"
+                    stroke={selMoE ? DS.hi : "rgba(46,68,57,0.55)"}
+                    strokeWidth={selMoE ? "1.2" : "0.8"}
+                    strokeDasharray={selMoE ? "none" : "2 1.5"} />
+                  {/* inner dot */}
+                  <circle cx={MOE_CX} cy={MOE_CY} r={selMoE ? 3 : 2.2}
+                    fill={selMoE ? DS.hi : "rgba(46,68,57,0.8)"}
+                    stroke={selMoE ? DS.hi : "rgba(46,68,57,0.9)"}
+                    strokeWidth="0.5" />
+                  {/* star glyph */}
+                  <text x={MOE_CX} y={MOE_CY + 0.85} fontSize={selMoE ? 3.2 : 2.6}
+                    fill={DS.paper} textAnchor="middle" dominantBaseline="middle"
+                    fontFamily="serif" style={{ pointerEvents: "none" }}>✶</text>
+                </g>
+              );
+            })()}
 
             {/* Art — no events: tiny dots */}
             {ART.filter(([,,,ev]) => ev === 0).map(([x, y, label]) => (
@@ -285,6 +312,23 @@ export function MapView({ saved, onSave, onTabChange }: {
                 </text>
               );
             })}
+
+            {/* MoE label — always visible, zoom-invariant */}
+            {(() => {
+              const MOE_CX = 95.8, MOE_CY = 80.9;
+              const fs = 2.8 / tfm.s;
+              const offset = 8 / tfm.s;
+              return (
+                <text x={MOE_CX} y={MOE_CY - offset} fontSize={fs}
+                  fill={selMoE ? DS.hi : DS.ink}
+                  stroke="#f2e8d0" strokeWidth={0.9 / tfm.s}
+                  paintOrder="stroke fill"
+                  textAnchor="middle" fontFamily="'Special Elite', monospace" fontWeight="bold"
+                  transform={`rotate(10 ${MOE_CX} ${MOE_CY})`}>
+                  MAIN STAGE
+                </text>
+              );
+            })()}
 
             {/* Art-with-events labels — only show when selected or very zoomed in */}
             {ART.filter(([,,,ev]) => ev > 0).map(([x, y, label]) => {
