@@ -375,7 +375,7 @@ export function MapView({ saved, onSave, onTabChange }: {
                 style={{ fontSize: 24, cursor: "pointer", color: DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>
             </div>
             <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "6px 14px 12px",
-              display: "flex", flexDirection: "column", gap: 7 }}>
+              display: "flex", flexDirection: "column", gap: 7, touchAction: "pan-y" }}>
               {moeEvents.map((e, i) => {
                 const day = e.days[0];
                 const newDay = i === 0 || moeEvents[i - 1].days[0] !== day;
@@ -435,7 +435,7 @@ export function MapView({ saved, onSave, onTabChange }: {
                 style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>
             </div>
             <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "6px 14px 12px",
-              display: "flex", flexDirection: "column", gap: 7 }}>
+              display: "flex", flexDirection: "column", gap: 7, touchAction: "pan-y" }}>
               {campEvents.map((e, i) => {
                 const day = e.days[0];
                 const newDay = i === 0 || campEvents[i - 1].days[0] !== day;
@@ -495,7 +495,7 @@ export function MapView({ saved, onSave, onTabChange }: {
                 style={{ fontSize: 24.9, cursor: "pointer", color: DS.muted, background: "none", border: "none", padding: 0, lineHeight: 1 }}>×</button>
             </div>
             <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "6px 14px 12px",
-              display: "flex", flexDirection: "column", gap: 7 }}>
+              display: "flex", flexDirection: "column", gap: 7, touchAction: "pan-y" }}>
               {artEvts.map((e, i) => {
                 const day = e.days[0];
                 const newDay = i === 0 || artEvts[i - 1].days[0] !== day;
