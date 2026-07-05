@@ -18,15 +18,14 @@ export function MineView({ saved, onSave, onTabChange }: {
     for (const id of ids) if (!saved.has(id)) onSave(id);
   };
   const savedEvents = useMemo(() =>
-    events.filter((e) => saved.has(e.id))
-      .sort((a, b) => DAYS.indexOf(a.days[0] as typeof DAYS[number]) - DAYS.indexOf(b.days[0] as typeof DAYS[number])), [saved]);
+    events.filter((e) => saved.has(e.id)), [saved]);
 
-  // Group saved events by first day
+  // Group saved events by each day they occur on (recurring events appear on every day)
   const byDay = useMemo(() => {
     const groups: { day: string; evs: typeof savedEvents; startIndex: number }[] = [];
     let idx = 0;
     for (const day of DAYS) {
-      const evs = savedEvents.filter((e) => e.days[0] === day);
+      const evs = savedEvents.filter((e) => e.days.includes(day));
       if (evs.length) { groups.push({ day, evs, startIndex: idx }); idx += evs.length; }
     }
     return groups;
@@ -86,7 +85,7 @@ export function MineView({ saved, onSave, onTabChange }: {
                     <span style={{ marginLeft: "auto", fontFamily: DS.fMono, fontSize: 10.5, color: DS.brown, letterSpacing: 1 }}>✶ {DAY_DATES[day]}</span>
                   </div>
                   {evs.map((e, i) => (
-                    <StubCard key={e.id} event={e} index={startIndex + i} saved onSelect={setSheet} onSave={onSave} />
+                    <StubCard key={day + "-" + e.id} event={e} index={startIndex + i} saved onSelect={setSheet} onSave={onSave} />
                   ))}
                 </>
               ))}
